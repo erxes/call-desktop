@@ -1,0 +1,14 @@
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
+  vite-plus: 1.6.0
+# Core publishes its packages under the v2-next tag, often more than once a day;
+# the release-age gate stays on for everything else.
+minimumReleaseAgeExclude:
+  - '@erxes/*'
+  - electron@45.3.4
+overrides:
+  'vite@*': 'catalog:'
+# Electron's install script downloads the binary the app runs on.
+allowBuilds:
+  electron: true
+  electron-winstaller: false

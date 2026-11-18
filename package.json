@@ -1,0 +1,67 @@
+{
+  "name": "erxes-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "erxes as a desktop app for macOS, Windows and Linux",
+  "homepage": "https://erxes.io",
+  "author": "erxes Inc <info@erxes.io>",
+  "type": "module",
+  "main": "dist/main.mjs",
+  "scripts": {
+    "build": "vp pack",
+    "dev": "pnpm build && env -u ELECTRON_RUN_AS_NODE electron .",
+    "e2e": "pnpm build && env -u ELECTRON_RUN_AS_NODE playwright test -c e2e/playwright.config.ts",
+    "dist": "pnpm build && electron-builder"
+  },
+  "devDependencies": {
+    "@erxes/lint": "0.1.3",
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^26.6.6",
+    "electron": "^45.3.4",
+    "electron-builder": "^26.18.0",
+    "knip": "^6.45.1",
+    "tsrs": "0.25.0-ts7.1.0-beta",
+    "typescript": "7.0.2",
+    "vite-plus": "catalog:",
+    "zod": "^4.6.7"
+  },
+  "engines": {
+    "node": ">=26"
+  },
+  "packageManager": "pnpm@12.18.0",
+  "build": {
+    "appId": "io.erxes.desktop",
+    "productName": "erxes",
+    "files": [
+      "dist",
+      "static"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": true,
+      "entitlements": "static/entitlements.mac.plist",
+      "entitlementsInherit": "static/entitlements.mac.plist",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "erxes uses the microphone for calls."
+      }
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office"
+    }
+  }
+}

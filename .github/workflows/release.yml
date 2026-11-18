@@ -1,0 +1,31 @@
+name: Release
+
+# A tag `v<version>` (package.json's version) builds the installers on each system and puts
+# them on that GitHub release, where /releases/latest/download/<name> finds the newest.
+on:
+  push:
+    tags: ['v*']
+
+permissions: {}
+
+jobs:
+  installers:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - run: pnpm exec electron-builder --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Unsigned until the signing keys are added: the build doesn't look for an identity.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'

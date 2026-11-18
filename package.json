@@ -46,12 +46,25 @@
     "directories": {
       "output": "release"
     },
+    "publish": {
+      "provider": "github",
+      "owner": "erxes",
+      "repo": "call-desktop",
+      "releaseType": "release"
+    },
     "mac": {
       "category": "public.app-category.business",
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "dmg",
+          "arch": "universal"
+        },
+        {
+          "target": "zip",
+          "arch": "universal"
+        }
       ],
+      "artifactName": "erxes-Call-mac.${ext}",
       "hardenedRuntime": true,
       "entitlements": "static/entitlements.mac.plist",
       "entitlementsInherit": "static/entitlements.mac.plist",
@@ -62,12 +75,14 @@
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "artifactName": "erxes-Call-windows.${ext}"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
+      "artifactName": "erxes-Call-linux.${ext}",
       "category": "Office"
     }
   }

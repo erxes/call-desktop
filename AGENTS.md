@@ -1,10 +1,10 @@
-# erxes desktop
+# erxes Call
 
-erxes as a desktop app for macOS, Windows and Linux
+erxes calls as a desktop phone for macOS, Windows and Linux
 
-An Electron shell around erxes web. It bundles no erxes screen: the window loads
-the server the user connects to, so a web release reaches the app with no app
-release. `src/` is the main process, `static/setup.html` the one page it owns.
+An Electron app with its own screens: sign in, a dial pad, the call it is on and the
+recent calls. It signs the member in with core's "Sign in with erxes", takes their SIP
+line from Frontline's API and talks to the PBX itself over WebRTC (JsSIP).
 
 ## Quality
 
@@ -35,17 +35,25 @@ without line-by-line review.
 
 - `vp run check` runs the escape guard, format, lint, types, knip and the docs
   guard. `vp run fix` formats and fixes lint. `pnpm e2e` builds the app and drives
-  it with Playwright against a stand-in server; a behavior the shell adds gets a
-  test in `e2e/`.
-- `src/main.ts` owns the app's life and menu, `src/windows.ts` the two windows
-  and what they may do, `src/settings.ts` the saved server, `src/preload.ts` the
-  setup form. `pnpm build` bundles main as ESM and the preload as CommonJS into
-  `dist/`, with only `electron` left outside.
-- The main window gets no preload and no Node. A page gets a permission only on
-  the connected server's origin, and only one in `ALLOWED_PERMISSIONS`. A new
-  bridge to web goes through a preload with `contextBridge`, typed in
-  `@erxes/core-contract`.
-- Don't await at the top level of `src/main.ts`: Electron fires `ready` only
+  it with Playwright against a stand-in erxes (`e2e/erxes.ts`); a behavior the app
+  adds gets a test in `e2e/`. No test reaches a PBX: try calls by hand.
+- `src/main/` is the main process: `signIn.ts` the OAuth flow, `session.ts` the
+  kept sign-in and its tokens, `api.ts` the calls to Frontline, `window.ts` the
+  window and what it may do. `src/ui/` is the window's page (React), `src/bridge.ts`
+  what the two say to each other, put at `window.desktop` by `src/preload.ts`.
+- Frontline is the OAuth client. Its manifest lists this app's redirect address,
+  `http://127.0.0.1:47823/callback`, and core matches it exactly: change the port
+  in both repos or in neither.
+- Tokens stay in the main process, the refresh token encrypted with the system's
+  keychain. The page asks for a procedure by name and never sees a token.
+- A procedure's answer is outside input: the page reads it with a zod schema that
+  names only the fields it shows. `src/ui/useSip.ts` mirrors Frontline's softphone
+  hook; a fix to one goes into both.
+- The page loads from disk and never navigates. It gets the microphone and
+  notifications; a link opens in the system's browser.
+- Closing the window keeps the line signed in: it hides on macOS and minimizes
+  elsewhere. File › Quit ends the app.
+- Don't await at the top level of `src/main/main.ts`: Electron fires `ready` only
   after the module loads, so the app would never start.
 - A shell started from VS Code inherits `ELECTRON_RUN_AS_NODE`, which makes
   Electron run as Node. `pnpm dev` and `pnpm e2e` unset it.

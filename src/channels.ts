@@ -1,2 +1,10 @@
-/** The setup window sends the typed address; the answer is what is wrong with it, if anything. */
-export const CONNECT = 'connect';
+/** The messages between the window and the app; `bridge.ts` says what each carries. */
+export const CHANNELS = {
+  session: 'session',
+  signIn: 'sign-in',
+  signOut: 'sign-out',
+  api: 'api',
+  openErxes: 'open-erxes',
+  ringing: 'ringing',
+  quiet: 'quiet',
+} as const;

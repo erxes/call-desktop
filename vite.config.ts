@@ -1,4 +1,5 @@
 import { preset } from '@erxes/lint';
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite-plus';
 
 // The type check is tsrs (TypeScript 7) running as oxlint's tsgolint.
@@ -15,8 +16,13 @@ const ignorePatterns = ['**/node_modules/**', '**/dist/**', 'release/**'];
 const neverBundle = ['electron'];
 
 export default defineConfig({
+  // The window's page (`vp build`), loaded from disk: relative addresses.
+  root: 'src/ui',
+  base: './',
+  plugins: [react()],
+  build: { outDir: '../../dist/ui', emptyOutDir: true },
   pack: [
-    { entry: 'src/main.ts', format: 'esm', deps: { neverBundle, onlyBundle: ['zod'] } },
+    { entry: 'src/main/main.ts', format: 'esm', deps: { neverBundle, onlyBundle: ['zod'] } },
     { entry: 'src/preload.ts', format: 'cjs', deps: { neverBundle }, clean: false },
   ],
   run: {

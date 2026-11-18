@@ -1,16 +1,18 @@
-# erxes desktop
+# erxes Call
 
-erxes as a desktop app for macOS, Windows and Linux. The first launch asks for
-the address you open erxes at; the app remembers it and opens it from then on.
-File › Change server… asks again.
+erxes calls as a desktop phone for macOS, Windows and Linux.
 
-What the app adds to the browser tab:
+- Sign in with erxes: enter the address you open erxes at, then sign in in your
+  browser. The app never sees your password and stays signed in.
+- Call from the dial pad on your extension; answer, mute, hold, send tones,
+  transfer to another extension and hang up.
+- Write a note on the call; it saves on the call's conversation in erxes.
+- An incoming call rings, brings the window forward and shows a notification.
+- Recent calls of your channels; a click puts the number on the dial pad.
+- Closing the window keeps the phone on. File › Quit turns it off.
 
-- Its own window and dock icon, one instance at a time.
-- The softphone's microphone and notifications are allowed for the connected
-  server only.
-- Links to other sites open in the system's browser.
-- An unreachable server brings the address back, to fix or retry.
+It needs an erxes with Frontline, a connected Grandstream PBX, and an extension
+an admin gave a SIP password.
 
 ## Develop
 

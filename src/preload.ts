@@ -1,28 +1,20 @@
-import { ipcRenderer } from 'electron';
-import { CONNECT } from './channels.ts';
+import { contextBridge, ipcRenderer } from 'electron';
+import { CHANNELS } from './channels.ts';
+import type { Desktop } from './bridge.ts';
 
-// Runs in the setup window only (`static/setup.html`): fills the form from the query the
-// main process opened it with, and sends the address on Connect.
-window.addEventListener('DOMContentLoaded', () => {
-  const form = document.querySelector('form');
-  const address = document.querySelector('input');
-  const alert = document.querySelector('[role="alert"]');
+const ask = async (channel: string, ...parts: unknown[]): Promise<unknown> =>
+  ipcRenderer.invoke(channel, ...parts);
 
-  if (!form || !address || !alert) throw new Error('setup.html lost its form');
+const desktop: Desktop = {
+  session: async () => ask(CHANNELS.session),
+  signIn: async (address) => ask(CHANNELS.signIn, address),
+  signOut: async () => {
+    await ask(CHANNELS.signOut);
+  },
+  api: async (procedure, input) => ask(CHANNELS.api, procedure, input),
+  openErxes: (path) => ipcRenderer.send(CHANNELS.openErxes, path),
+  ringing: (number) => ipcRenderer.send(CHANNELS.ringing, number),
+  quiet: () => ipcRenderer.send(CHANNELS.quiet),
+};
 
-  const query = new URLSearchParams(window.location.search);
-
-  address.value = query.get('address') ?? '';
-  alert.textContent = query.get('error');
-
-  const connect = async () => {
-    const problem: unknown = await ipcRenderer.invoke(CONNECT, address.value);
-
-    alert.textContent = typeof problem === 'string' ? problem : '';
-  };
-
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    void connect();
-  });
-});
+contextBridge.exposeInMainWorld('desktop', desktop);

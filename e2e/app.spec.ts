@@ -1,11 +1,9 @@
 import { mkdtemp } from 'node:fs/promises';
-import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { _electron as electron, expect, test } from '@playwright/test';
-
-const PAGE = `<!doctype html><title>Fake erxes</title><h1>Inbox</h1>
-<a href="https://docs.example.test/guide" target="_blank">Guide</a>`;
+import type { Page } from '@playwright/test';
+import { startErxes } from './erxes.ts';
 
 const cleanups: (() => Promise<unknown>)[] = [];
 
@@ -13,135 +11,187 @@ test.afterEach(async () => {
   await Promise.all(cleanups.splice(0).map(async (cleanup) => cleanup()));
 });
 
-/** A stand-in for erxes web: its origin. */
-const startServer = async () => {
-  const server = createServer((_request, response) => {
-    response.setHeader('content-type', 'text/html');
-    response.end(PAGE);
-  });
+const erxes = async (options?: Parameters<typeof startErxes>[0]) => {
+  const server = await startErxes(options);
 
-  await new Promise<void>((resolve) => {
-    server.listen(0, '127.0.0.1', resolve);
-  });
-  cleanups.push(async () => {
-    server.closeAllConnections();
-    server.close();
-  });
+  cleanups.push(server.stop);
 
-  const address = server.address();
-
-  if (address === null || typeof address === 'string') throw new Error('the server has no port');
-
-  return `http://127.0.0.1:${address.port}`;
+  return server;
 };
 
 /** Launches the app on one data folder; call the result again for a second run. */
 const launcher = async () => {
-  const data = await mkdtemp(join(tmpdir(), 'erxes-desktop-'));
+  const data = await mkdtemp(join(tmpdir(), 'call-desktop-'));
 
   return async () => {
     const app = await electron.launch({ args: ['.', `--user-data-dir=${data}`] });
 
     cleanups.push(async () => app.close());
 
-    return app;
+    // The member's browser: it follows erxes' sign-in back to the app's redirect address.
+    await app.evaluate(({ shell }) => {
+      shell.openExternal = async (url) => {
+        await fetch(url);
+      };
+    });
+
+    return { app, page: await app.firstWindow() };
   };
 };
 
-test('the first launch asks for the address, opens it and remembers it', async () => {
-  const server = await startServer();
+const signIn = async (page: Page, address: string) => {
+  await page.getByLabel('Address').fill(address);
+  await page.getByRole('button', { name: 'Sign in with erxes' }).click();
+};
+
+test('a member signs in with erxes, sees their line and stays signed in', async () => {
+  const server = await erxes();
   const launch = await launcher();
-
   const first = await launch();
-  const setup = await first.firstWindow();
 
-  await expect(setup.getByRole('heading', { name: 'Connect to erxes' })).toBeVisible();
-  const opened = first.waitForEvent('window');
+  await expect(first.page.getByRole('heading', { name: 'erxes Call' })).toBeVisible();
+  await signIn(first.page, `${server.origin}/frontline/inbox`);
 
-  await setup.getByLabel('Address').fill(`${server}/some/page`);
-  await setup.getByRole('button', { name: 'Connect' }).click();
-
-  const erxes = await opened;
-
-  await expect(erxes.getByRole('heading', { name: 'Inbox' })).toBeVisible();
-  expect(erxes.url()).toBe(`${server}/`);
-  await expect.poll(() => first.windows().length).toBe(1);
-  await first.close();
+  await expect(first.page.getByText('Bat Erdene')).toBeVisible();
+  await expect(first.page.getByText('Support · 101')).toBeVisible();
+  await first.app.close();
 
   const second = await launch();
 
-  await expect((await second.firstWindow()).getByRole('heading', { name: 'Inbox' })).toBeVisible();
+  await expect(second.page.getByText('Bat Erdene')).toBeVisible();
+  await expect(second.page.getByText('Support · 101')).toBeVisible();
+  // Each call renewed its access token with the refresh token the one before left.
+  expect(server.seen.renewals).toBeGreaterThanOrEqual(2);
 });
 
-test('an address that is no web address is refused with the reason', async () => {
-  const launch = await launcher();
+test('the dial pad types a number, and a recent call puts its number there', async () => {
+  const server = await erxes();
+  const { page } = await (await launcher())();
 
-  const app = await launch();
-  const setup = await app.firstWindow();
+  await signIn(page, server.origin);
 
-  await setup.getByLabel('Address').fill('ftp://files.example.test');
-  await setup.getByRole('button', { name: 'Connect' }).click();
+  const pad = page.getByRole('group', { name: 'Dial pad' });
 
-  await expect(setup.getByRole('alert')).toHaveText(
+  await pad.getByRole('button', { name: '9' }).click();
+  await pad.getByRole('button', { name: '#' }).click();
+  await expect(page.getByLabel('Number')).toHaveValue('9#');
+  await page.getByRole('button', { name: 'Delete' }).click();
+  await expect(page.getByLabel('Number')).toHaveValue('9');
+  await pad.getByRole('button', { name: '#' }).click();
+  // The line's PBX is unreachable, so the phone refuses to call.
+  await expect(page.getByRole('button', { name: 'Call', exact: true })).toBeDisabled();
+
+  await page.getByRole('button', { name: 'Recent' }).click();
+  await page.getByRole('button', { name: /\+97699112233/ }).click();
+
+  await expect(page.getByLabel('Number')).toHaveValue('+97699112233');
+});
+
+test('a member without a line is told how to get one', async () => {
+  const server = await erxes({ lines: [] });
+  const { page } = await (await launcher())();
+
+  await signIn(page, server.origin);
+
+  await expect(page.getByText('You have no phone line yet')).toBeVisible();
+});
+
+test('an address that is no web address, or no erxes, is refused with the reason', async () => {
+  const { page } = await (await launcher())();
+
+  await signIn(page, 'ftp://files.example.test');
+  await expect(page.getByRole('alert')).toHaveText(
     'Enter an address like https://example.erxes.io',
   );
-  expect(app.windows()).toHaveLength(1);
-});
-
-test('a server that stopped answering brings the address back to fix or retry', async () => {
-  const server = await startServer();
-  const launch = await launcher();
-
-  const first = await launch();
-  const setup = await first.firstWindow();
-  const opened = first.waitForEvent('window');
 
   // Nothing listens on port 9.
-  await setup.getByLabel('Address').fill('http://127.0.0.1:9');
-  await setup.getByRole('button', { name: 'Connect' }).click();
-  await opened;
-  await first.close();
-
-  const second = await launch();
-  const retry = await second.waitForEvent('window', (page) => page.url().startsWith('file:'));
-
-  await expect(retry.getByRole('alert')).toContainText("Can't reach http://127.0.0.1:9");
-  await expect(retry.getByLabel('Address')).toHaveValue('http://127.0.0.1:9');
-
-  const erxes = second.waitForEvent('window');
-
-  await retry.getByLabel('Address').fill(server);
-  await retry.getByRole('button', { name: 'Connect' }).click();
-  await expect((await erxes).getByRole('heading', { name: 'Inbox' })).toBeVisible();
+  await signIn(page, 'http://127.0.0.1:9');
+  await expect(page.getByRole('alert')).toHaveText("Can't reach http://127.0.0.1:9");
 });
 
-test("a link to another site opens in the system's browser, not in the app", async () => {
-  const server = await startServer();
+test('a kept sign-in whose erxes is down says so and stays signed in', async () => {
+  const server = await erxes();
   const launch = await launcher();
+  const first = await launch();
 
-  const app = await launch();
-  const setup = await app.firstWindow();
+  await signIn(first.page, server.origin);
+  await expect(first.page.getByText('Support · 101')).toBeVisible();
+  await first.app.close();
+  await server.stop();
+
+  const second = await launch();
+
+  await expect(second.page.getByRole('alert')).toHaveText("Can't reach erxes");
+  await expect(second.page.getByText('Bat Erdene')).toBeVisible();
+});
+
+test('a queue agent pauses and resumes their queue calls', async () => {
+  const server = await erxes();
+  const { page } = await (await launcher())();
+
+  await signIn(page, server.origin);
+  await page.getByRole('button', { name: 'Pause queue calls' }).click();
+
+  await expect(page.getByRole('button', { name: 'Resume queue calls' })).toBeVisible();
+  expect(server.seen.agentStatus).toBe('paused');
+
+  await page.getByRole('button', { name: 'Resume queue calls' }).click();
+
+  await expect(page.getByRole('button', { name: 'Pause queue calls' })).toBeVisible();
+  expect(server.seen.agentStatus).toBe('available');
+});
+
+test('History opens erxes web in a second window that names itself the app', async () => {
+  const server = await erxes();
+  const { app, page } = await (await launcher())();
+
+  await signIn(page, server.origin);
+
   const opened = app.waitForEvent('window');
 
-  await setup.getByLabel('Address').fill(server);
-  await setup.getByRole('button', { name: 'Connect' }).click();
+  await page.getByRole('button', { name: 'History' }).click();
 
-  const erxes = await opened;
+  const web = await opened;
 
-  // Catches what would reach the browser instead of opening one.
-  const sent = app.evaluate(
-    async ({ shell }) =>
-      new Promise<string>((resolve) => {
-        shell.openExternal = async (url) => {
-          resolve(url);
-        };
-      }),
-  );
+  await expect(web.getByRole('heading', { name: '/frontline/calls/history' })).toBeVisible();
+  await expect(web.getByText('erxesCall/')).toBeVisible();
+  expect(web.url()).toBe(`${server.origin}/frontline/calls/history`);
+});
 
-  // The app answers calls in order, so the catch is in place once this one returns.
-  await app.evaluate(() => undefined);
-  await erxes.getByRole('link', { name: 'Guide' }).click();
+test('a sign-in left open in the browser gives way to a new one', async () => {
+  const server = await erxes();
+  const { app, page } = await (await launcher())();
 
-  expect(await sent).toBe('https://docs.example.test/guide');
-  expect(app.windows()).toHaveLength(1);
+  // The member closes the browser tab: nothing comes back.
+  await app.evaluate(({ shell }) => {
+    shell.openExternal = async () => undefined;
+  });
+  await signIn(page, server.origin);
+  await expect(page.getByRole('status')).toContainText('Finish signing in in your browser');
+
+  await app.evaluate(({ shell }) => {
+    shell.openExternal = async (url) => {
+      await fetch(url);
+    };
+  });
+  await page.getByRole('button', { name: 'Sign in with erxes' }).click();
+
+  await expect(page.getByText('Bat Erdene')).toBeVisible();
+});
+
+test('signing out ends the sign-in at erxes and on the next launch', async () => {
+  const server = await erxes();
+  const launch = await launcher();
+  const first = await launch();
+
+  await signIn(first.page, server.origin);
+  await first.page.getByRole('button', { name: 'Sign out' }).click();
+
+  await expect(first.page.getByRole('button', { name: 'Sign in with erxes' })).toBeVisible();
+  expect(server.seen.revoked).toBe(1);
+  await first.app.close();
+
+  const second = await launch();
+
+  await expect(second.page.getByRole('button', { name: 'Sign in with erxes' })).toBeVisible();
 });

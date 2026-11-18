@@ -3,7 +3,8 @@
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": ["es2024", "dom"],
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
     "types": ["node"]
   },
   "include": ["*.ts", "src", "e2e"]

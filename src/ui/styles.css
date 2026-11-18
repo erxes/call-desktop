@@ -1,0 +1,665 @@
+/* erxes-ui's tokens (packages/ui/src/base.css), so the phone looks like erxes. */
+:root {
+  color-scheme: light dark;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.2102 0.006 285.87);
+  --muted: oklch(0.9619 0 0);
+  --muted-foreground: oklch(0.52 0.0057 17.33);
+  --surface: oklch(0.9848 0 0);
+  --border: oklch(0.9197 0.0041 286.32);
+  --primary: oklch(0.514 0.2276 276.98);
+  --primary-text: var(--primary);
+  --primary-soft: oklch(0.514 0.2276 276.98 / 10%);
+  --on-color: oklch(0.9848 0 0);
+  --success: oklch(0.63 0.17 149.49);
+  --success-text: oklch(0.47 0.14 149.49);
+  --warning: oklch(0.7453 0.1322 54.63);
+  --destructive: oklch(0.6368 0.2078 25.33);
+  --destructive-text: oklch(0.5 0.19 25.33);
+  --radius: 8px;
+  font:
+    14px/1.45 system-ui,
+    -apple-system,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.2044 0 0);
+    --foreground: oklch(0.9761 0.0012 286.38);
+    --muted: oklch(0.2591 0 0);
+    --muted-foreground: oklch(0.7132 0.0043 17.26);
+    --surface: oklch(0.2267 0 0);
+    --border: oklch(0.28 0.0104 285.76);
+    --primary-text: oklch(0.7 0.15 276.98);
+    --primary-soft: oklch(0.514 0.2276 276.98 / 22%);
+    --success-text: oklch(0.7205 0.192 149.49);
+    --destructive-text: oklch(0.72 0.17 25.33);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+small {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+svg {
+  flex: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  font-weight: 500;
+  transition:
+    background 0.12s,
+    transform 0.06s;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:not(:disabled):hover {
+  background: var(--muted);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  opacity: 0.4;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+button.primary {
+  color: var(--on-color);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+button.primary:not(:disabled):hover {
+  background: oklch(0.47 0.22 276.98);
+}
+
+button.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+
+textarea {
+  resize: vertical;
+}
+
+label {
+  font-weight: 500;
+}
+
+[role='alert'] {
+  color: var(--destructive-text);
+  font-size: 13px;
+}
+
+[role='alert']:empty {
+  display: none;
+}
+
+/* Sign in */
+
+.sign-in {
+  justify-content: center;
+  gap: 24px;
+  padding: 32px 24px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.brand .mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  color: var(--on-color);
+  background: var(--primary);
+}
+
+.brand h1 {
+  font-size: 22px;
+}
+
+.brand p {
+  color: var(--muted-foreground);
+}
+
+.sign-in form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sign-in input {
+  padding: 9px 12px;
+}
+
+.sign-in button.primary {
+  min-height: 40px;
+  margin-top: 4px;
+}
+
+.sign-in [role='status'] {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  color: var(--primary-text);
+  background: var(--primary-soft);
+  font-size: 13px;
+}
+
+/* The signed-in frame: who, the two sections, and erxes' pages */
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+header .who {
+  flex: 1;
+  min-width: 0;
+}
+
+header strong,
+header small {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--primary-text);
+  background: var(--primary-soft);
+  font-weight: 600;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 12px 16px 0;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--muted);
+}
+
+.tabs button {
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.tabs button[aria-pressed='true'] {
+  color: var(--foreground);
+  background: var(--background);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 10%);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 10px 16px;
+  overflow-y: auto;
+}
+
+.content > section {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.content > section[hidden] {
+  display: none;
+}
+
+.web {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.web button {
+  flex-direction: column;
+  gap: 2px;
+  min-height: 52px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+/* The line */
+
+.line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--muted);
+  font-size: 12px;
+}
+
+.status::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status, var(--muted-foreground));
+  content: '';
+}
+
+.status.ready {
+  --status: var(--success);
+}
+
+.status.connecting {
+  --status: var(--warning);
+}
+
+.status.offline {
+  --status: var(--destructive);
+}
+
+/* Dial pad */
+
+.dial {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.number {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  gap: 4px;
+}
+
+.number input {
+  min-width: 0;
+  padding: 2px 40px;
+  border: 0;
+  background: transparent;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.number button {
+  margin-left: -40px;
+}
+
+.pad {
+  display: grid;
+  grid-template-columns: repeat(3, 58px);
+  gap: 9px 24px;
+  justify-content: center;
+}
+
+.pad button {
+  flex-direction: column;
+  gap: 0;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--muted);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.pad button:not(:disabled):hover {
+  background: var(--border);
+}
+
+.pad small {
+  height: 12px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+}
+
+/* Round call buttons: dial, answer, hang up */
+
+.round {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.round button {
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+}
+
+button.go {
+  color: var(--on-color);
+  background: var(--success);
+}
+
+button.go:not(:disabled):hover {
+  background: oklch(0.56 0.16 149.49);
+}
+
+button.stop {
+  color: var(--on-color);
+  background: var(--destructive);
+}
+
+button.stop:not(:disabled):hover {
+  background: oklch(0.58 0.2 25.33);
+}
+
+/* The call */
+
+.call {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: 12px;
+  text-align: center;
+}
+
+.call .avatar svg {
+  width: 32px;
+  height: 32px;
+}
+
+.call .avatar {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
+  font-size: 26px;
+}
+
+.call.ringing .avatar {
+  animation: ring 1.4s ease-out infinite;
+}
+
+@keyframes ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--primary-soft);
+  }
+
+  100% {
+    box-shadow: 0 0 0 18px transparent;
+  }
+}
+
+.call strong {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.call [role='status'] {
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(4, 64px);
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.controls button {
+  flex-direction: column;
+  gap: 4px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: var(--muted);
+  font-size: 11px;
+}
+
+.controls button[aria-pressed='true'] {
+  color: var(--on-color);
+  background: var(--foreground);
+}
+
+.call .pad {
+  margin-top: 16px;
+}
+
+.answer {
+  display: flex;
+  gap: 56px;
+  justify-content: center;
+  margin-top: auto;
+  padding: 16px 0 4px;
+}
+
+/* Tools on the call: transfer, the note, the queues */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.card h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.transfer {
+  align-self: stretch;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.transfer .row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.note .actions {
+  display: flex;
+  gap: 6px;
+}
+
+.note .actions button:first-child {
+  margin-right: auto;
+}
+
+.note [role='status'] {
+  color: var(--success-text);
+  font-size: 13px;
+}
+
+.agent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding: 6px 6px 6px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.agent button[aria-pressed='true'] {
+  color: var(--on-color);
+  background: var(--warning);
+  border-color: var(--warning);
+}
+
+/* Recent calls */
+
+.recent {
+  margin: 0 -8px;
+  padding: 0;
+  list-style: none;
+}
+
+.recent button {
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 8px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.recent .kind {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+
+.recent .kind.missed {
+  color: var(--destructive-text);
+}
+
+.recent .what {
+  flex: 1;
+  min-width: 0;
+}
+
+.recent strong,
+.recent small {
+  display: block;
+}
+
+.recent time {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
